@@ -2,15 +2,28 @@ package com.joyuan.config;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.common.DefaultOAuth2AccessToken;
+import org.springframework.security.oauth2.common.OAuth2AccessToken;
 import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableAuthorizationServer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerEndpointsConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerSecurityConfigurer;
+import org.springframework.security.oauth2.provider.OAuth2Authentication;
+import org.springframework.security.oauth2.provider.token.*;
 import org.springframework.security.oauth2.provider.token.store.InMemoryTokenStore;
+import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
+import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
 import sun.security.util.SecurityConstants;
+
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  *
@@ -76,7 +89,31 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
     @Override
     public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
         endpoints
-                .tokenStore(new InMemoryTokenStore()) //内存方式存储token
-                .authenticationManager(authenticationManager); //管理认证管理器
+                .accessTokenConverter(tokenConverter()) //设置token转换器
+                .authenticationManager(authenticationManager); //认证管理器
     }
+
+    //转换器
+    private JwtAccessTokenConverter tokenConverter(){
+        JwtAccessTokenConverter converter = new JwtAccessTokenConverter();
+        converter.setSigningKey("123456"); //设置签名key
+        converter.setAccessTokenConverter(new MyDefaultAccessTokenConverter());
+        return converter;
+    }
+
+    //添加自定义的字段
+    private class MyDefaultAccessTokenConverter extends  DefaultAccessTokenConverter{
+        public MyDefaultAccessTokenConverter() {
+            super.setUserTokenConverter(new DefaultUserAuthenticationConverter(){
+                @Override
+                public Map<String, ?> convertUserAuthentication(Authentication authentication) {
+                    // 默认包含了user_name字段
+                    Map<String, Object> response = (Map<String, Object>) super.convertUserAuthentication(authentication);
+                    response.put("myusername", authentication.getName());
+                    return response;
+                }
+            });
+        }
+    }
+
 }

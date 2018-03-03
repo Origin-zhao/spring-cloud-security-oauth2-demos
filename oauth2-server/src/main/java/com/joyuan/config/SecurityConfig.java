@@ -44,7 +44,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 .formLogin().and().httpBasic().disable();
     }
-    //认证管理器
+    //认证管理器,oauth密码模式的时候需要
     @Bean
     @Override
     public AuthenticationManager authenticationManagerBean() throws Exception {
