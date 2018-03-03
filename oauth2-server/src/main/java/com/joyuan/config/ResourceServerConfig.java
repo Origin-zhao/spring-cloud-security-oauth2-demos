@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.core.token.TokenService;
 import org.springframework.security.oauth2.common.DefaultOAuth2AccessToken;
@@ -18,8 +19,15 @@ import org.springframework.security.oauth2.provider.token.TokenEnhancerChain;
 import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
+import org.springframework.util.Base64Utils;
 
+import javax.security.cert.CertificateException;
+import javax.security.cert.X509Certificate;
+import java.io.IOException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.CertificateFactorySpi;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -48,10 +56,26 @@ public class ResourceServerConfig extends ResourceServerConfigurerAdapter{
 
     //转换器
     @Bean
-    public JwtAccessTokenConverter accessTokenConverter() {
+    public JwtAccessTokenConverter accessTokenConverter()  {
         JwtAccessTokenConverter converter = new JwtAccessTokenConverter();
-        converter.setSigningKey("123456");
+        converter.setVerifierKey(getPublicKey());
         return converter;
+    }
+
+    //获取公钥字符串
+    private String getPublicKey() {
+        String publicKey= null;
+        try {
+            //公钥文件
+            ClassPathResource resource = new ClassPathResource("publickey.cer");
+            X509Certificate cer = X509Certificate.getInstance(resource.getInputStream());
+            publicKey = "-----BEGIN PUBLIC KEY-----\n" +
+                    Base64Utils.encodeToString(cer.getPublicKey().getEncoded()) +
+                    "\n-----END PUBLIC KEY-----";
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return publicKey;
     }
 
     @Bean

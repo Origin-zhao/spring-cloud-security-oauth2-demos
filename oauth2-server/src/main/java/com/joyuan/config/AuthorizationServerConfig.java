@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.common.DefaultOAuth2AccessToken;
@@ -19,6 +20,7 @@ import org.springframework.security.oauth2.provider.token.*;
 import org.springframework.security.oauth2.provider.token.store.InMemoryTokenStore;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
+import org.springframework.security.oauth2.provider.token.store.KeyStoreKeyFactory;
 import sun.security.util.SecurityConstants;
 
 import java.util.Arrays;
@@ -96,7 +98,11 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
     //转换器
     private JwtAccessTokenConverter tokenConverter(){
         JwtAccessTokenConverter converter = new JwtAccessTokenConverter();
-        converter.setSigningKey("123456"); //设置签名key
+
+        //私钥文件地址和密码mykey1
+        KeyStoreKeyFactory keyFactory = new KeyStoreKeyFactory(new ClassPathResource("mykey.jks"),"mykey1".toCharArray());
+        converter.setKeyPair(keyFactory.getKeyPair("mytest")); //别名,必须和之前的一样
+
         converter.setAccessTokenConverter(new MyDefaultAccessTokenConverter());
         return converter;
     }
